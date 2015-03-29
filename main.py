@@ -169,6 +169,123 @@ class Board(QtGui.QFrame):
 
     def timerEvent(self, event):
 
+        if event.timerId() == self.timer.timerId():
+
+            if self.isWaitingAfterLine:
+                self.isWaitingAfterLine = False
+                self.newPiece()
+            else:
+                self.oneLineDown()
+
+        else:
+            super(Board, self).timerEvent(event)
+
+    def clearBoard(self):
+
+        for i in range(Board.BoardHeight * Board.BoardWidth):
+            self.board.append(Tetrominoe.NoShape)
+
+    def dropDown(self):
+
+        newY = self.curY
+
+        while newY > 0:
+
+            if not self.tryMove(self.curPiece, self.curX, newY - 1):
+                break
+
+            newY -= 1
+
+        self.pieceDropped()
+
+    def oneLineDown(self):
+
+        if not self.tryMove(self.curPiece, self.curX, self.curY - 1):
+            self.pieceDropped()
+
+    def pieceDropped(self):
+
+        for i in range(4):
+
+            x = self.curX + self.curPiece.x(i)
+            y = self.curY - self.curPiece.y(i)
+            self.setShapeAt(x, y, self.curPiece.shape())
+
+        self.removeFullLines()
+
+        if not self.isWaitingAfterLine:
+            self.newPiece()
+
+    def removeFullLines(self):
+
+        numFullLines = 0
+        rowsToRemove = []
+
+        for i in range(Board.BoardHeight):
+
+            n = 0
+            for j in range(Board.BoardWidth):
+                if not self.shapeAt(j, i) == Tetrominoe.NoShape:
+                    n = n + 1
+
+            if n == 10:
+                rowsToRemove.append(i)
+
+        rowsToRemove.reverse()
+
+        for m in rowsToRemove:
+
+            for k in range(m, Board.BoardHeight):
+                for l in range(Board.BoardWidth):
+                    self.setShapeAt(l, k, self.shapeAt(l, k + 1))
+
+        numFullLines = numFullLines + len(rowsToRemove)
+
+        if numFullLines > 0:
+
+            self.numLinesRemoved = self.numLinesRemoved + numFullLines
+            self.msg2Statusbar.emit(str(self.numLinesRemoved))
+
+            self.isWaitingAfterLine = True
+            self.curPiece.setShape(Tetrominoe.NoShape)
+            self.update()
+
+    def newPiece(self):
+
+        self.curPiece = Shape()
+        self.curPiece.setRandomShape()
+        self.curX = Board.BoardWidth / 2 + 1
+        self.curY = Board.BoardHeight - 1 + self.curPiece.minY()
+
+        if not self.tryMove(self.curPiece, self.curX, self.curY):
+
+            self.curPiece.setShape(Tetrominoe.NoShape)
+            self.timer.stop()
+            self.isStarted = False
+            self.msg2Statusbar.emit("Game over")
+
+    def tryMove(self, newPiece, newX, newY):
+
+        for i in range(4):
+
+            x = newX + newPiece.x(i)
+            y = newY - newPiece.y(i)
+
+            if x < 0 or x >= Board.BoardWidth or y < 0 or y >= Board.BoardHeight:
+                return False
+
+            if self.shapeAt(x, y) != Tetrominoe.NoShape:
+                return False
+
+        self.curPiece = newPiece
+        self.curX = newX
+        self.curY = newY
+        self.update()
+
+        return True
+
+    def drawSquare(self, painter, x, y, shape):
+
         pass
 
 
