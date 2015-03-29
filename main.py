@@ -286,9 +286,24 @@ class Board(QtGui.QFrame):
 
     def drawSquare(self, painter, x, y, shape):
 
-        pass
-
-
+        colorTable = [0x000000, 0xCC6666, 0x66CC66, 0x6666CC,
+                      0xCCCC66, 0xCC66CC, 0x66CCCC, 0xDAAA00]
+        
+        color = QtGui.Qcolor(colorTable[shape])
+        painter.fillRect(x + 1, y + 1, self.squareWidth() - 2,
+                self. squareHeight() - 2, color)
+        
+        painter.setPen(color.light())
+        painter.drawLine(x, y + self.squareHeight() - 1, x, y)
+        painter.drawLine(x, y, x + self.squareWidth() - 1, y)
+        
+        painter.setPen(color.dark())
+        painter.drawLine(x + 1, y + self.squareHeight() - 1,
+                x + self.squareWidth() - 1, y + self.squareHeight() - 1)
+        painter.drawLine(x + self.squareWidth() - 1,
+                y + self.squareHeight() - 1, x + self.squareWidth() - 1, y + 1)
+        
+        
 class Tetrominoe(object):
 
     NoShape = 0
